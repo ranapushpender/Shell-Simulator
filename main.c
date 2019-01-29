@@ -8,6 +8,7 @@ typedef struct {
     int type;
     char filename[50];
 }file;
+char cDir[50];
 int init(FILE **defDir)
 {
     if(*defDir==NULL)
@@ -18,6 +19,7 @@ int init(FILE **defDir)
             return 0;
         }
         else{
+            strcpy(cDir," Home");
             return 1;
         }
 
@@ -28,7 +30,7 @@ void getFiles(FILE *dir)
 {
     file f;
     fseek(dir,0,0);
-    printf("NAME\t\t\tType");
+    printf("\n NAME\t\t\tType\n");
     while((fread(&f,sizeof(file),1,dir)))
     {
         printf("\n%s\t\t\t%s\n",f.name,((f.type==1)? "File" :"Directory"));
@@ -39,6 +41,7 @@ void addFile(FILE *dir,char *fname)
     file f;
     strcpy(f.name,fname);
     sprintf(f.filename,"%lu",time(0));
+    strcat(f.filename,".file");
     f.type=1;
     FILE *fl;
     fl=fopen(f.filename,"wb");
@@ -48,7 +51,7 @@ void addFile(FILE *dir,char *fname)
         fclose(fl);
     }
     else{
-        printf("\nSome Error Has Occured\n");
+        printf("\n Some Error Has Occured\n");
     }
 
 }
@@ -57,6 +60,7 @@ void addDir(FILE *dir,char *dirName)
     file f;
     strcpy(f.name,dirName);
     sprintf(f.filename,"%lu",time(0));
+    strcat(f.filename,".dir");
     f.type=0;
     FILE *fl;
     fl=fopen(f.filename,"wb");
@@ -66,7 +70,7 @@ void addDir(FILE *dir,char *dirName)
         fclose(fl);
     }
     else{
-        printf("\nSome Error Has Occured\n");
+        printf("\n Some Error Has Occured\n");
     }
 }
 void changeDirectory(FILE **dir,char *dirName)
@@ -75,11 +79,20 @@ void changeDirectory(FILE **dir,char *dirName)
     int result=checkIsDirectoryExist(*dir,dirName,&f);
     if(result==1)
     {
-        *dir=fopen(f.filename,"ab");
-        printf("\nDirectory changed to %s\n",f.name);
+        fclose(*dir);
+        *dir=fopen(f.filename,"ab+");
+        if(*dir!=NULL)
+        {
+            printf("\n Directory changed to %s\n",f.name);
+            strcpy(cDir,f.name);
+        }
+        else{
+            printf("\n Could Not open directory\n");
+        }
+
     }
     else{
-        printf("\nDirectory does not exist");
+        printf("\n Directory does not exist");
     }
 }
 int checkIsDirectoryExist(FILE *dir,char *dirname,file *result){
@@ -120,10 +133,10 @@ void execute(char cmd[],FILE **fp)
     {
         char filename[50];
         gets(filename);
-        printf("\n%s",filename);
-        if(strcmp(filename,"~~")==0)
+        if(strstr(filename,"~")!=NULL)
         {
             *fp=fopen("defDir.dir","ab+");
+            strcpy(cDir," Home");
             return;
         }
         changeDirectory(fp,filename);
@@ -137,7 +150,8 @@ int main()
     init(&dir);
     while(stricmp(cmd,"exit")!=0)
     {
-        printf("$ ");
+
+        printf("\n%s:~$ ",cDir);
         scanf("%s",cmd);
         execute(cmd,&dir);
     }
